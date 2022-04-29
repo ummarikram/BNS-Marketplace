@@ -45,7 +45,7 @@ export function Signin() {
             },
 
             onFinish: () => {
-                router.push('/profile')
+                router.push('/')
             },
             userSession: userSession,
         });

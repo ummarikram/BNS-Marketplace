@@ -32,7 +32,6 @@ async function appCallReadOnlyFunction(optionsProps) {
     const options = {
         ...optionsProps,
         network: networkType(),
-        senderAddress: myStxAddress(),
     };
 
     return callReadOnlyFunction(options)
@@ -67,22 +66,19 @@ async function appCallPublicFunction(optionsProps) {
 };
 
 export async function checkAvailability(domainName) {
-    if (isConnected()) {
-        const options = {
-            contractAddress: contractAddress,
-            contractName: contractName,
-            functionName: "is-available",
-            functionArgs: [stringAsciiCV(domainName)],
-        }
 
-        const result = await appCallReadOnlyFunction(options);
-
-        if (result) {
-            return result.value;
-        }
+    const options = {
+        contractAddress: contractAddress,
+        contractName: contractName,
+        functionName: "is-available",
+        functionArgs: [stringAsciiCV(domainName)],
+        senderAddress: contractAddress
     }
-    else {
-        alert("Please Connect your Wallet")
+
+    const result = await appCallReadOnlyFunction(options);
+
+    if (result) {
+        return result.value;
     }
 }
 
@@ -118,17 +114,47 @@ export async function registerDomain(domainName) {
             ],
         }
 
-        let response = await appCallPublicFunction(options);
+        appCallPublicFunction(options);
     }
     else {
         alert("Please Connect your Wallet")
     }
 }
 
-export async function fetchDomains() {
-        let response = await fetch(`https://stacks-node-api.testnet.stacks.co/extended/v1/tokens/nft/holdings?principal=${myStxAddress()}&asset_identifiers=STYMF4ARBZEVT61CKV8RBQHC6NCGCAF7AQWH979K.custom-domain::AMORTIZE-DOMAIN`)
+export async function transferDomain(domainName, newOwner) {
 
-        let data = await response.json();
+    if (isConnected()) {
 
-        return data.results;
+        const postConditionSellerAddress = myStxAddress();
+        const postConditionSellerCode = NonFungibleConditionCode.DoesNotOwn;
+
+        const postConditionBuyerAddress = newOwner;
+        const postConditionBuyerCode = NonFungibleConditionCode.Owns;
+
+
+        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, "AMORTIZE-DOMAIN");
+        const tokenAssetName = stringAsciiCV(domainName);
+
+        const postConditions = [
+            makeStandardNonFungiblePostCondition(postConditionSellerAddress, postConditionSellerCode, nonFungibleAssetInfo, tokenAssetName),
+            makeStandardNonFungiblePostCondition(postConditionBuyerAddress, postConditionBuyerCode, nonFungibleAssetInfo, tokenAssetName)
+        ];
+
+        const options = {
+            contractAddress: contractAddress,
+            contractName: contractName,
+            functionName: "transfer-ownership",
+            postConditions,
+            functionArgs: [
+                // enter all your function arguments here but cast them to CV first
+                standardPrincipalCV(newOwner),
+                stringAsciiCV(domainName),
+            ],
+        }
+
+        appCallPublicFunction(options);
     }
+    else {
+        alert("Please Connect your Wallet")
+    }
+}

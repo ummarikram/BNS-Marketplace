@@ -24,15 +24,17 @@ export default function Index() {
         setAvailable(availability)
       }
     }
+    else
+    {
+      setAvailable(false);
+    }
 
   }, [domainName])
 
   const register = async () => {
 
-    console.log(domainName);
-
-    if (domainName !== "") {
-      const respones = await registerDomain(domainName);
+    if (domainName !== "" && available) {
+      await registerDomain(domainName);
     }
   }
 
@@ -50,7 +52,7 @@ export default function Index() {
 
               <div className="mt-12">
                 <input type="search" name="search" placeholder="Search" onChange={handleChange}
-                  class="border-2 border-gray-400 bg-white h-10 w-1/2 px-5 pr-16 rounded-lg text-sm focus:outline-none"></input>
+                  className="border-2 border-gray-400 bg-white h-10 w-1/2 px-5 pr-16 rounded-lg text-sm focus:outline-none"></input>
 
                 {!available &&
                   <button

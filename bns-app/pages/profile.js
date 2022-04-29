@@ -1,38 +1,36 @@
 import React from "react";
-
+import useSWR from 'swr'
 import Navbar from "components/Navbars/IndexNavbar.js";
 import Footer from "components/Footers/FooterAdmin.js";
 import { myStxAddress } from "stacks/connect/auth";
-import { useEffect, useState } from "react";
-import { fetchDomains } from "stacks/contract/calls";
+import { useState } from "react";
+import { transferDomain } from "stacks/contract/calls";
+import PageChange from "components/PageChange/PageChange";
+import { useRouter } from "next/router";
 
-import {
-  Card,
-  CardHeader,
-  Table,
-  Container,
-  Row,
-  Col,
-  CardBody,
-  Form,
-  FormGroup,
-  Input,
-  Button,
-} from "reactstrap";
+const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 export default function Profile() {
 
-  const [myDomains, setMyDomains] = useState([]);
+  const { asPath } = useRouter();
 
-  useEffect(async () => {
+  const [newTransfer, setNewTransfer] = useState([]);
 
-    const domains = await fetchDomains();
+  const handleChange = (index) => (evt) => {
+    newTransfer[index] = evt.target.value;
+  }
 
-    if (domains) {
-      setMyDomains(domains);
-    }
+  const performTransfer = (domain, index) => {
+    const domainName = domain.substring(1, domain.length - 1); // removing "" from start & end
+    transferDomain(domainName, newTransfer[index])
+  }
 
-  }, [])
+  const { data, error } = useSWR(`/api/domains?principal=${myStxAddress()}`, fetcher)
+
+  if (error) return <h1>Something went wrong!</h1>
+  if (!data) return <PageChange path={asPath} />
+
+  const myDomains = data.data;
 
   return (
     <>
@@ -42,8 +40,7 @@ export default function Profile() {
           <div
             className="absolute top-0 w-full h-full bg-center bg-cover"
             style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1499336315816-097655dcfbda?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2710&q=80')",
+              backgroundColor: "Background"
             }}
           >
             <span
@@ -92,23 +89,41 @@ export default function Profile() {
 
                 {/* Table */}
 
-                <div className="mr-4 p-3 text-center">
-                  <thead className="thead-light">
-                    <tr>
-                      <th scope="col">DOMAIN NAME</th>
-                    </tr>
-                  </thead>
-                  <tbody>
 
-                    {myDomains.map(domain =>
-                      <tr>
-                        <td>{domain.value.repr}</td>
+                <div className="container px-4 mx-auto">
+                  <div className="flex flex-wrap">
+                    <div className="w-full px-4 flex-1">
+                      <span className="text-sm block my-4 p-3 font-bold text-center text-blueGray-700 rounded border-blueGray-100">MY DOMAINS</span>
+                    </div>
+                  </div>
 
-                      </tr>
-                    )}
+                  {myDomains.map((domain, index) =>
+                    <div className="flex flex-wrap">
+                      <div className="w-1/2 px-4 flex-1">
+                        <span className="text-sm block my-4 p-3 text-blueGray-700 rounded border-blueGray-100">{domain.value.repr}</span>
+                      </div>
+                      <div className="w-full px-4 flex-1">
+
+                        <span className="text-sm block my-4 p-3 text-blueGray-700 rounded border-blueGray-100">
+
+                          <button
+                            className="float-right bg-blueGray-700 text-white active:bg-blueGray-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
+                            type="submit"
+                            onClick={() => { performTransfer(domain.value.repr, index) }}
+                          >
+                            Transfer!
+                          </button>
+
+                          <input type="search" name="search" placeholder="New Owner" onChange={handleChange(index)}
+                            className="float-right border-gray-400 bg-white h-8 w-1/2 px-5 rounded-lg text-sm focus:outline-none"></input>
 
 
-                  </tbody>
+                        </span>
+                      </div>
+
+                    </div>
+                  )}
+
                 </div>
 
               </div>
@@ -121,3 +136,6 @@ export default function Profile() {
     </>
   );
 }
+
+
+
