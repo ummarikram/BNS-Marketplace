@@ -4,7 +4,7 @@ import Navbar from "components/Navbars/IndexNavbar.js";
 import Footer from "components/Footers/FooterAdmin.js";
 import { myStxAddress } from "stacks/connect/auth";
 import { useState } from "react";
-import { transferDomain } from "stacks/contract/calls";
+import { burnDomain, setRedirectRoute, transferDomain } from "stacks/contract/calls";
 import PageChange from "components/PageChange/PageChange";
 import { useRouter } from "next/router";
 
@@ -16,22 +16,35 @@ export default function Profile() {
 
   const [newTransfer, setNewTransfer] = useState([]);
 
-  const handleChange = (index) => (evt) => {
+  const [route, setRoute] = useState([]);
+
+  const transferHandleChange = (index) => (evt) => {
     newTransfer[index] = evt.target.value;
   }
 
-  const performTransfer = (domain, index) => {
-    const domainName = domain.substring(1, domain.length - 1); // removing "" from start & end
+  const routeHandleChange = (index) => (evt) => {
+    route[index] = evt.target.value;
+  }
+
+  const performTransfer = (domainName, index) => {
     transferDomain(domainName, newTransfer[index])
   }
 
-  const { data, error } = useSWR(`/api/domains?principal=${myStxAddress()}`, fetcher)
+  const performSetRoute = (domainName, index) => {
+    setRedirectRoute(domainName, route[index])
+  }
+
+  const performDomainBurn = (domainName) => {
+    burnDomain(domainName);
+  }
+
+  const { data, error } = useSWR(`/api/userDomains?principal=${myStxAddress()}`, fetcher)
 
   if (error) return <h1>Something went wrong!</h1>
   if (!data) return <PageChange path={asPath} />
 
-  const myDomains = data.data;
-
+  const myDomains = data.data? data.data : [];
+ 
   return (
     <>
       <Navbar transparent />
@@ -97,33 +110,63 @@ export default function Profile() {
                     </div>
                   </div>
 
+                  <div style={{ height: "400px", overflowY: "scroll" }}>
                   {myDomains.map((domain, index) =>
                     <div className="flex flex-wrap">
                       <div className="w-1/2 px-4 flex-1">
-                        <span className="text-sm block my-4 p-3 text-blueGray-700 rounded border-blueGray-100">{domain.value.repr}</span>
+                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">DOMAIN : {domain.domain}</span>
+
+                        <button
+                          className="float-right bg-red-700 text-white active:bg-blueGray-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
+                          type="submit"
+                          onClick={() => { performDomainBurn(domain.domain) }}
+                        >
+                          Delete
+                        </button>
+                        <br></br>
+
+
+                        {/* Redirect Route */}
+                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">Redirect URL : {domain.route? domain.route : "Not Set"}</span>
+
+                        <input type="search" name="search" placeholder="e.g. https://www.amortize.io" onChange={routeHandleChange(index)}
+                          className="border-gray-400 bg-white h-8 w-1/2 px-5 rounded-lg text-sm focus:outline-none"></input>
+                        
+                        <button
+                          className="bg-blueGray-700 text-white active:bg-blueGray-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
+                          type="submit"
+                          onClick={() => { performSetRoute(domain.domain, index) }}
+                        >
+                          Set
+                        </button>
+
+                        <br></br>
+                        <br></br>
+
+                        {/* Transfer */}
+                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">Transfer Domain!</span>
+
+                        <input type="search" name="search" placeholder="e.g. STYM....KY9C" onChange={transferHandleChange(index)}
+                          className="border-gray-400 bg-white h-8 w-1/2 px-5 rounded-lg text-sm focus:outline-none"></input>
+
+                        <button
+                          className="bg-blueGray-700 text-white active:bg-blueGray-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
+                          type="submit"
+                          onClick={() => { performTransfer(domain.domain, index) }}
+                        >
+                          Transfer
+                        </button>
+
+                        <br></br>
+
+                        <br></br>
+                        
                       </div>
-                      <div className="w-full px-4 flex-1">
 
-                        <span className="text-sm block my-4 p-3 text-blueGray-700 rounded border-blueGray-100">
-
-                          <button
-                            className="float-right bg-blueGray-700 text-white active:bg-blueGray-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
-                            type="submit"
-                            onClick={() => { performTransfer(domain.value.repr, index) }}
-                          >
-                            Transfer!
-                          </button>
-
-                          <input type="search" name="search" placeholder="New Owner" onChange={handleChange(index)}
-                            className="float-right border-gray-400 bg-white h-8 w-1/2 px-5 rounded-lg text-sm focus:outline-none"></input>
-
-
-                        </span>
-                      </div>
-
+                      
                     </div>
                   )}
-
+                  </div>
                 </div>
 
               </div>

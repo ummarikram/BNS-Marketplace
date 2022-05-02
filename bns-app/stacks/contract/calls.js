@@ -18,12 +18,14 @@ import {
     makeStandardNonFungiblePostCondition,
     createAssetInfo,
     bufferCVFromString,
+    noneCV,
+    someCV,
 } from "@stacks/transactions";
 
 import { openContractCall } from "@stacks/connect";
 
 const contractAddress = "STYMF4ARBZEVT61CKV8RBQHC6NCGCAF7AQWH979K";
-const contractName = "custom-domain";
+const contractName = "custom-domain-V2";
 
 async function appCallReadOnlyFunction(optionsProps) {
     if (!optionsProps)
@@ -86,15 +88,51 @@ export async function registerDomain(domainName) {
 
     if (isConnected()) {
 
-        const date = new Date();
-
-        const domainData = {
-            PurchaseTime: date,
-            ExpiryYear: date.getFullYear() + 5
-        }
-
         const postConditionAddress = myStxAddress();
         const postConditionCode = NonFungibleConditionCode.Owns;
+        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, "AMORTIZE-DOMAIN");
+        const tokenAssetName = stringAsciiCV(domainName);
+        const postConditions = [
+            makeStandardNonFungiblePostCondition(postConditionAddress, postConditionCode, nonFungibleAssetInfo, tokenAssetName)
+        ];
+
+        let date = new Date();
+
+        const purchased = Math.floor(date/1000);
+
+        date.setFullYear(date.getFullYear() + 5);
+
+        const expiry = Math.floor(date/1000);
+
+        const options = {
+            contractAddress: contractAddress,
+            contractName: contractName,
+            functionName: "mint-domain",
+            postConditions,
+            functionArgs: [
+                // enter all your function arguments here but cast them to CV first
+                standardPrincipalCV(myStxAddress()),
+                stringAsciiCV(domainName),
+                uintCV(purchased),
+                uintCV(expiry),
+                noneCV(),
+            ],
+            validateWithAbi: true,
+        }
+
+        appCallPublicFunction(options);
+    }
+    else {
+        alert("Please Connect your Wallet")
+    }
+}
+
+export async function burnDomain(domainName) {
+
+    if (isConnected()) {
+
+        const postConditionAddress = myStxAddress();
+        const postConditionCode = NonFungibleConditionCode.DoesNotOwn;
         const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, "AMORTIZE-DOMAIN");
         const tokenAssetName = stringAsciiCV(domainName);
         const postConditions = [
@@ -104,14 +142,13 @@ export async function registerDomain(domainName) {
         const options = {
             contractAddress: contractAddress,
             contractName: contractName,
-            functionName: "mint",
+            functionName: "burn",
             postConditions,
             functionArgs: [
                 // enter all your function arguments here but cast them to CV first
-                standardPrincipalCV(myStxAddress()),
                 stringAsciiCV(domainName),
-                bufferCV(Buffer.from(JSON.stringify(domainData)))
             ],
+            validateWithAbi: true,
         }
 
         appCallPublicFunction(options);
@@ -150,6 +187,51 @@ export async function transferDomain(domainName, newOwner) {
                 standardPrincipalCV(newOwner),
                 stringAsciiCV(domainName),
             ],
+        }
+
+        appCallPublicFunction(options);
+    }
+    else {
+        alert("Please Connect your Wallet")
+    }
+}
+
+export async function setRedirectRoute(domainName, route) {
+
+    if (isConnected()) {
+
+        const options = {
+            contractAddress: contractAddress,
+            contractName: contractName,
+            functionName: "set-route",
+            functionArgs: [
+                // enter all your function arguments here but cast them to CV first
+                stringAsciiCV(domainName),
+                someCV(stringAsciiCV(route))
+            ],
+            validateWithAbi: true,
+        }
+
+        appCallPublicFunction(options);
+    }
+    else {
+        alert("Please Connect your Wallet")
+    }
+}
+
+export async function disableRedirectRoute(domainName, route) {
+
+    if (isConnected()) {
+
+        const options = {
+            contractAddress: contractAddress,
+            contractName: contractName,
+            functionName: "disable-route",
+            functionArgs: [
+                // enter all your function arguments here but cast them to CV first
+                stringAsciiCV(domainName),
+            ],
+            validateWithAbi: true,
         }
 
         appCallPublicFunction(options);
