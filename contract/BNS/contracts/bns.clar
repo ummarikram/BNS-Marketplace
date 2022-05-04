@@ -8,8 +8,8 @@
 
 ;; data maps and vars
 (define-map domain-data 
-    {name: (string-ascii 128)}
-    {routed: bool, route: (optional (string-ascii 128))}
+  {name: (string-ascii 128)}
+  {routed: bool, route: (optional (string-ascii 128))}
 )
 
 ;; defining non-fungible token for Amortize
@@ -31,13 +31,13 @@
 
 (define-private (register-many-domains (name (string-ascii 128)))
   (begin
-      (asserts! (is-eq (nft-mint? AMORTIZE-DOMAIN name tx-sender) (ok true)) ERR_MINT_FAILED)
-      (ok 
-            (map-set domain-data
-            {name: name}
-            {routed: false, route: none}
-            )
+    (asserts! (is-eq (nft-mint? AMORTIZE-DOMAIN name tx-sender) (ok true)) ERR_MINT_FAILED)
+    (ok 
+      (map-set domain-data
+        {name: name}
+        {routed: false, route: none}
       )
+    )
   )
 )
 
@@ -45,41 +45,35 @@
 
 ;; minting the domain as nft on blockchain
 (define-public (mint-domain
-    (owner principal)
-    (name (string-ascii 128))
+  (owner principal)
+  (name (string-ascii 128))
+  )
+  (begin
+    (asserts! (register-domain owner name) ERR_MINT_FAILED)
+    (ok 
+      (map-set domain-data
+        {name: name}
+        {routed: false, route: none}
+      )
     )
- 
-    (begin
-
-        (asserts! (register-domain owner name) ERR_MINT_FAILED)
-
-        (ok 
-            (map-set domain-data
-            {name: name}
-            {routed: false, route: none}
-            )
-        )
-    )
+  )
 )
 
 (define-public (mint-many-domains
     (names (list 10 (string-ascii 128)))
-    )
- 
-    (begin
-        (map register-many-domains names)
-        (ok true)
-    )
+  )
+  (begin
+    (map register-many-domains names)
+    (ok true)
+  )
 )
 
 (define-public (transfer-ownership (new-owner principal) (name (string-ascii 128)))
   (begin
     (asserts! (is-owner name) ERR_AUTH_FAILED)
     (map-set domain-data
-            {name: name}
-            {routed: false,
-             route: none
-            }
+      {name: name}
+      {routed: false, route: none}
     )
     (nft-transfer? AMORTIZE-DOMAIN name tx-sender new-owner)
   )
@@ -88,25 +82,24 @@
 (define-public (set-route (name (string-ascii 128)) (new-route (optional (string-ascii 128))))
   (begin
     (asserts! (is-owner name) ERR_AUTH_FAILED)
-    (ok     (map-set domain-data
-              {name: name}
-              {
-               routed: true,
-               route: new-route
-            }
-    ))
+    (ok     
+      (map-set domain-data
+        {name: name}
+        {routed: true, route: new-route}
+      )
+    )
   )
 )
 
 (define-public (disable-route (name (string-ascii 128)))
   (begin
     (asserts! (is-owner name) ERR_AUTH_FAILED)
-    (ok     (map-set domain-data
-              {name: name}
-              {routed: false,
-               route: none
-              }
-    ))
+    (ok     
+      (map-set domain-data
+        {name: name}
+        {routed: false, route: none}
+      )
+    )
   )
 )
 
