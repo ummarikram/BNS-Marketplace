@@ -48,16 +48,19 @@ export default function Index() {
   const batchRegister = async () => {
 
     if (multipleDomains.length > 0) {
-        const availableDomains = multipleDomains.filter(domain => domain.availability === "Yes");
-        
-        if (availableDomains.length < 10)
-        {
+      const availableDomains = multipleDomains.filter(domain => domain.availability === "Yes");
+
+      if (availableDomains.length > 0) {
+        if (availableDomains.length < 10) {
           batchRegisterDomain(availableDomains);
         }
-        else
-        {
+        else {
           alert("You can only mint upto 10 domains at once!");
         }
+      }
+      else{
+        alert("No domains are available from the list!");
+      }
     }
   }
 
