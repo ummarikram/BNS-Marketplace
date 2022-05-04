@@ -1,16 +1,8 @@
 import { cvToHex, hexToCV, stringAsciiCV } from "@stacks/transactions";
+import { ClarityTypes } from "stacks/connect/types";
+import { contractName, contractAddress } from "stacks/contract/calls";
 
-const ContractName = "custom-domain-V2";
-const ContractAddress = "STYMF4ARBZEVT61CKV8RBQHC6NCGCAF7AQWH979K";
 const ResolveDomain = "get-domain-data";
-
-class ClarityType {
-    // Create new instances of the same class as static attributes
-    static OptionalNone = 9
-    static OptionalSome = 10
-    static StringASCII = 13
-}
-
 
 export default async function handler(req, res) {
 
@@ -18,19 +10,19 @@ export default async function handler(req, res) {
 
         const { domain } = req.query;
 
-        const response = await fetch(`https://stacks-node-api.testnet.stacks.co/v2/contracts/call-read/${ContractAddress}/${ContractName}/${ResolveDomain}`, {
+        const response = await fetch(`https://stacks-node-api.testnet.stacks.co/v2/contracts/call-read/${contractAddress}/${contractName}/${ResolveDomain}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ sender: ContractAddress, arguments: [cvToHex(stringAsciiCV(domain))] }),
+            body: JSON.stringify({ sender: contractAddress, arguments: [cvToHex(stringAsciiCV(domain))] }),
         });
 
         const result = await response.json();
 
         const value = hexToCV(result.result);
 
-        if (value.type == ClarityType.OptionalNone) {
+        if (value.type == ClarityTypes.OptionalNone) {
             const error = new Error('The Domain is not Owned')
             error.status = 405
             throw error
@@ -42,7 +34,7 @@ export default async function handler(req, res) {
             const data = value.value.data.route;
             
             // if route not set
-            if (data.type == ClarityType.OptionalNone)
+            if (data.type == ClarityTypes.OptionalNone)
             {
                 res.status(200).send({ data: "none" })
             }
@@ -50,7 +42,7 @@ export default async function handler(req, res) {
             // if route set
             else
             {
-                if (data.value.type == ClarityType.StringASCII)
+                if (data.value.type == ClarityTypes.StringASCII)
                 {
                     res.status(200).send({ data: data.value.data })
                 }

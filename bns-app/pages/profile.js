@@ -106,7 +106,7 @@ export default function Profile() {
                 <div className="container px-4 mx-auto">
                   <div className="flex flex-wrap">
                     <div className="w-full px-4 flex-1">
-                      <span className="text-sm block my-4 p-3 font-bold text-center text-blueGray-700 rounded border-blueGray-100">MY DOMAINS</span>
+                      <span className="text-xl block my-4 p-3 font-bold text-center text-blueGray-700 rounded border-blueGray-100">MY DOMAINS</span>
                     </div>
                   </div>
 
@@ -114,7 +114,7 @@ export default function Profile() {
                   {myDomains.map((domain, index) =>
                     <div className="flex flex-wrap">
                       <div className="w-1/2 px-4 flex-1">
-                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">DOMAIN : {domain.domain}</span>
+                        <span className="text-lg block text-blueGray-700 rounded border-blueGray-100">Domain : {domain.domain}</span>
 
                         <button
                           className="float-right bg-red-700 text-white active:bg-blueGray-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
@@ -127,7 +127,20 @@ export default function Profile() {
 
 
                         {/* Redirect Route */}
-                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">Redirect URL : {domain.route? domain.route : "Not Set"}</span>
+                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">
+                          
+                        Redirect URL : &nbsp;
+                          {domain.route != null &&
+                          <a href={domain.route}>
+                           {domain.route}
+                          </a>
+                          }
+                          {domain.route == null &&
+                            <a href={domain.route}>
+                            Not Set
+                           </a>
+                          }
+                          </span>
 
                         <input type="search" name="search" placeholder="e.g. https://www.amortize.io" onChange={routeHandleChange(index)}
                           className="border-gray-400 bg-white h-8 w-1/2 px-5 rounded-lg text-sm focus:outline-none"></input>
@@ -144,7 +157,7 @@ export default function Profile() {
                         <br></br>
 
                         {/* Transfer */}
-                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">Transfer Domain!</span>
+                        <span className="text-sm block text-blueGray-700 rounded border-blueGray-100">Transfer Domain</span>
 
                         <input type="search" name="search" placeholder="e.g. STYM....KY9C" onChange={transferHandleChange(index)}
                           className="border-gray-400 bg-white h-8 w-1/2 px-5 rounded-lg text-sm focus:outline-none"></input>

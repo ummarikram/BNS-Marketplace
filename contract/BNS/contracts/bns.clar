@@ -9,7 +9,7 @@
 ;; data maps and vars
 (define-map domain-data 
     {name: (string-ascii 128)}
-    {purchase: uint, expiry: uint, routed: bool, route: (optional (string-ascii 128))}
+    {routed: bool, route: (optional (string-ascii 128))}
 )
 
 ;; defining non-fungible token for Amortize
@@ -19,9 +19,7 @@
 
 ;; Registering the domain
 (define-private (register-domain (owner principal) (name (string-ascii 128)))
-    (begin
-      (unwrap! (nft-mint? AMORTIZE-DOMAIN name owner) false)
-    )
+  (unwrap! (nft-mint? AMORTIZE-DOMAIN name owner) false)
 )
 
 ;; Check Owner
@@ -31,6 +29,17 @@
   )
 )
 
+(define-private (register-many-domains (name (string-ascii 128)))
+  (begin
+      (asserts! (is-eq (nft-mint? AMORTIZE-DOMAIN name tx-sender) (ok true)) ERR_MINT_FAILED)
+      (ok 
+            (map-set domain-data
+            {name: name}
+            {routed: false, route: none}
+            )
+      )
+  )
+)
 
 ;; public functions
 
@@ -38,29 +47,28 @@
 (define-public (mint-domain
     (owner principal)
     (name (string-ascii 128))
-    (purchase uint)
-    (expiry uint)
-    (route (optional (string-ascii 128)))
     )
  
     (begin
-        
+
         (asserts! (register-domain owner name) ERR_MINT_FAILED)
 
-        (if (is-some route)
-
-            (ok (map-set domain-data
+        (ok 
+            (map-set domain-data
             {name: name}
-            {purchase: purchase, expiry: expiry, routed: true, route: route}
-            ))
-
-            (ok (map-set domain-data
-            {name: name}
-            {purchase: purchase, expiry: expiry, routed: false, route: none}
-            ))
-        
-        
+            {routed: false, route: none}
+            )
         )
+    )
+)
+
+(define-public (mint-many-domains
+    (names (list 10 (string-ascii 128)))
+    )
+ 
+    (begin
+        (map register-many-domains names)
+        (ok true)
     )
 )
 
@@ -69,9 +77,7 @@
     (asserts! (is-owner name) ERR_AUTH_FAILED)
     (map-set domain-data
             {name: name}
-            {purchase: (get-purchase-timestamp name),
-             expiry: (get-expiry-timestamp name),
-             routed: false,
+            {routed: false,
              route: none
             }
     )
@@ -84,8 +90,7 @@
     (asserts! (is-owner name) ERR_AUTH_FAILED)
     (ok     (map-set domain-data
               {name: name}
-              {purchase: (get-purchase-timestamp name),
-               expiry: (get-expiry-timestamp name),
+              {
                routed: true,
                route: new-route
             }
@@ -98,11 +103,9 @@
     (asserts! (is-owner name) ERR_AUTH_FAILED)
     (ok     (map-set domain-data
               {name: name}
-              {purchase: (get-purchase-timestamp name),
-               expiry: (get-expiry-timestamp name),
-               routed: false,
+              {routed: false,
                route: none
-            }
+              }
     ))
   )
 )
@@ -122,14 +125,6 @@
 
 (define-read-only (is-routed (name (string-ascii 128)))
   (get routed (unwrap! (map-get? domain-data {name: name}) false))
-)
-
-(define-read-only (get-expiry-timestamp (name (string-ascii 128)))
-  (get expiry (unwrap! (map-get? domain-data {name: name}) u0))
-)
-
-(define-read-only (get-purchase-timestamp (name (string-ascii 128)))
-  (get purchase (unwrap! (map-get? domain-data {name: name}) u0))
 )
 
 (define-read-only (get-route (name (string-ascii 128)))

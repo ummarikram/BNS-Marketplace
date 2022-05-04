@@ -20,12 +20,14 @@ import {
     bufferCVFromString,
     noneCV,
     someCV,
+    listCV,
 } from "@stacks/transactions";
 
 import { openContractCall } from "@stacks/connect";
 
-const contractAddress = "STYMF4ARBZEVT61CKV8RBQHC6NCGCAF7AQWH979K";
-const contractName = "custom-domain-V2";
+export const contractAddress = "STYMF4ARBZEVT61CKV8RBQHC6NCGCAF7AQWH979K";
+export const contractName = "custom-domain-V3";
+export const assetName = "AMORTIZE-DOMAIN";
 
 async function appCallReadOnlyFunction(optionsProps) {
     if (!optionsProps)
@@ -90,19 +92,11 @@ export async function registerDomain(domainName) {
 
         const postConditionAddress = myStxAddress();
         const postConditionCode = NonFungibleConditionCode.Owns;
-        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, "AMORTIZE-DOMAIN");
+        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, assetName);
         const tokenAssetName = stringAsciiCV(domainName);
         const postConditions = [
             makeStandardNonFungiblePostCondition(postConditionAddress, postConditionCode, nonFungibleAssetInfo, tokenAssetName)
         ];
-
-        let date = new Date();
-
-        const purchased = Math.floor(date/1000);
-
-        date.setFullYear(date.getFullYear() + 5);
-
-        const expiry = Math.floor(date/1000);
 
         const options = {
             contractAddress: contractAddress,
@@ -113,9 +107,45 @@ export async function registerDomain(domainName) {
                 // enter all your function arguments here but cast them to CV first
                 standardPrincipalCV(myStxAddress()),
                 stringAsciiCV(domainName),
-                uintCV(purchased),
-                uintCV(expiry),
-                noneCV(),
+            ],
+            validateWithAbi: true,
+        }
+
+        appCallPublicFunction(options);
+    }
+    else {
+        alert("Please Connect your Wallet")
+    }
+}
+
+export async function batchRegisterDomain(domainNames) {
+
+    if (isConnected()) {
+
+        const postConditionAddress = myStxAddress();
+        const postConditionCode = NonFungibleConditionCode.Owns;
+        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, assetName);
+        
+        let postConditions = [];
+        let domainList = [];
+
+        for (let i = 0; i < domainNames.length ; i++)
+        {
+            const tokenAssetName = stringAsciiCV(domainNames[i].name);
+            domainList.push(stringAsciiCV(domainNames[i].name));
+            postConditions.push(makeStandardNonFungiblePostCondition(postConditionAddress, postConditionCode, nonFungibleAssetInfo, tokenAssetName));
+        }
+
+        console.log(domainList);
+        
+        const options = {
+            contractAddress: contractAddress,
+            contractName: contractName,
+            functionName: "mint-many-domains",
+            postConditions,
+            functionArgs: [
+                // enter all your function arguments here but cast them to CV first
+                listCV(domainList),
             ],
             validateWithAbi: true,
         }
@@ -133,7 +163,7 @@ export async function burnDomain(domainName) {
 
         const postConditionAddress = myStxAddress();
         const postConditionCode = NonFungibleConditionCode.DoesNotOwn;
-        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, "AMORTIZE-DOMAIN");
+        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, assetName);
         const tokenAssetName = stringAsciiCV(domainName);
         const postConditions = [
             makeStandardNonFungiblePostCondition(postConditionAddress, postConditionCode, nonFungibleAssetInfo, tokenAssetName)
@@ -169,7 +199,7 @@ export async function transferDomain(domainName, newOwner) {
         const postConditionBuyerCode = NonFungibleConditionCode.Owns;
 
 
-        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, "AMORTIZE-DOMAIN");
+        const nonFungibleAssetInfo = createAssetInfo(contractAddress, contractName, assetName);
         const tokenAssetName = stringAsciiCV(domainName);
 
         const postConditions = [

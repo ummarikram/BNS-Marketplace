@@ -1,13 +1,8 @@
-const ContractName = "custom-domain-V2";
-const ContractAddress = "STYMF4ARBZEVT61CKV8RBQHC6NCGCAF7AQWH979K";
-const ResolveDomain = "get-route";
 import { cvToHex, hexToCV, stringAsciiCV } from "@stacks/transactions";
+import { ClarityTypes } from "stacks/connect/types";
+import { contractName, contractAddress, assetName } from "stacks/contract/calls";
 
-class ClarityType {
-    // Create new instances of the same class as static attributes
-    static OptionalNone = 9
-    static OptionalSome = 10
-}
+const ResolveDomain = "get-route";
 
 export default async function handler(req, res) {
 
@@ -15,7 +10,7 @@ export default async function handler(req, res) {
 
     try {
 
-        const response = await fetch(`https://stacks-node-api.testnet.stacks.co/extended/v1/tokens/nft/holdings?principal=${principal}&asset_identifiers=STYMF4ARBZEVT61CKV8RBQHC6NCGCAF7AQWH979K.custom-domain-V2::AMORTIZE-DOMAIN`)
+        const response = await fetch(`https://stacks-node-api.testnet.stacks.co/extended/v1/tokens/nft/holdings?principal=${principal}&asset_identifiers=${contractAddress}.${contractName}::${assetName}`)
 
         const result = await response.json();
 
@@ -32,7 +27,7 @@ export default async function handler(req, res) {
                 console.log(domainName);
 
                 try {
-                    const routeResponse = await fetch(`https://stacks-node-api.testnet.stacks.co/v2/contracts/call-read/${ContractAddress}/${ContractName}/${ResolveDomain}`, {
+                    const routeResponse = await fetch(`https://stacks-node-api.testnet.stacks.co/v2/contracts/call-read/${contractAddress}/${contractName}/${ResolveDomain}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -45,9 +40,7 @@ export default async function handler(req, res) {
 
                     const value = hexToCV(routeResult.result);
 
-                    console.log(value);
-
-                    if (value.type == ClarityType.OptionalSome) {
+                    if (value.type == ClarityTypes.OptionalSome) {
 
                         results.push({ domain: domainName, route: value.value.data })
                     }
